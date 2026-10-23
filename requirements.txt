@@ -1,6 +1,0 @@
-numpy
-Biopython
-scipy
-tqdm
-h5py
-joblib

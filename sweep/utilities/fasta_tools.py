@@ -4,6 +4,7 @@
 from typing import List, Tuple
 from Bio import SeqIO
 
+
 def fastaread(fastaname):
     """
     Read sequences from a FASTA file.
@@ -18,7 +19,10 @@ def fastaread(fastaname):
     records = list(SeqIO.parse(fastaname, "fasta"))
     return records
 
-def extract_headers_and_sequences(seq_records: List[SeqIO.SeqRecord]) -> Tuple[List[str], List[str]]:
+
+def extract_headers_and_sequences(
+    seq_records: List[SeqIO.SeqRecord],
+) -> Tuple[List[str], List[str]]:
     """
     Extracts headers and sequences from a list of SeqRecord objects.
 
@@ -32,9 +36,9 @@ def extract_headers_and_sequences(seq_records: List[SeqIO.SeqRecord]) -> Tuple[L
     """
     headers = []
     sequences = []
-    
+
     for record in seq_records:
         headers.append(record.id)
         sequences.append(str(record.seq))
-        
+
     return headers, sequences

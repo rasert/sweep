@@ -4,6 +4,7 @@
 from .sweep_support.orth import orth
 import numpy as np
 
+
 def orthbase(lin, col, seed=None, dtype=np.float32):
     """
     Generate an orthogonal basis matrix.

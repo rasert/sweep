@@ -23,7 +23,7 @@ Projection Matrix" topic. Here is how to perform the default matrix download:
 ```python
 from sweep import down_proj_mat
 
-down_proj_mat() # Downloads the default projection matrix file
+down_proj_mat()  # Downloads the default projection matrix file
 ```
 
 ## Handling Amino Acid Sequences
@@ -63,10 +63,10 @@ the calc_proj_mat_size function. Here is an example:
 from sweep import fastaread, fas2sweep, orthbase, calc_proj_mat_size
 
 mask = [4, 7, 4]
-matrix_size = calc_proj_mat_size(mask, 'NT')
+matrix_size = calc_proj_mat_size(mask, "NT")
 ob = orthbase(matrix_size, 600)
 fasta = fastaread("fasta_file_path")
-vect = fas2sweep(fasta, mask=mask, orth_mat=ob, fasta_type='NT')
+vect = fas2sweep(fasta, mask=mask, orth_mat=ob, fasta_type="NT")
 ```
 
 ## Phylogenetic Tree Generation Using SWeeP
@@ -82,14 +82,20 @@ generate_tree is invoked with these vectors, sequence headers, and
 a specified file name to save the resulting phylogenetic tree in
 Newick format.
 ```python
-from sweep import (fastaread, fas2sweep, orthbase, calc_proj_mat_size,
-                   generate_tree, extract_headers_and_sequences)
+from sweep import (
+    fastaread,
+    fas2sweep,
+    orthbase,
+    calc_proj_mat_size,
+    generate_tree,
+    extract_headers_and_sequences,
+)
 
 # Define the mask for nucleotide sequences
 mask = [4, 7, 4]  # Example mask for nucleotide sequences
 
 # Calculate the projection matrix size based on the mask and sequence type ('NT' for nucleotides)
-matrix_size = calc_proj_mat_size(mask, 'NT')
+matrix_size = calc_proj_mat_size(mask, "NT")
 
 # Generate an orthonormal projection matrix using orthbase
 ob = orthbase(matrix_size, 600)  # 600 is an arbitrary size example for illustration
@@ -101,10 +107,10 @@ fasta = fastaread("fasta_file_path")
 headers, _ = extract_headers_and_sequences(fasta)
 
 # Convert nucleotide sequences to SWeeP vectors using fas2sweep
-vect = fas2sweep(fasta, mask=mask, orth_mat=ob, fasta_type='NT')
+vect = fas2sweep(fasta, mask=mask, orth_mat=ob, fasta_type="NT")
 
 # Generate a phylogenetic tree from the SWeeP vectors and save it in Newick format
-tree = generate_tree(vect, headers, 'tree.newick')
+tree = generate_tree(vect, headers, "tree.newick")
 ```
 
 ## Available Functions

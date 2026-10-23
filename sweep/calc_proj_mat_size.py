@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-def calc_proj_mat_size(mask, fasta_type='AA'):
+
+def calc_proj_mat_size(mask, fasta_type="AA"):
     """
     Calculate the size of the projection matrix based on the mask and fasta_type.
 
@@ -12,13 +13,13 @@ def calc_proj_mat_size(mask, fasta_type='AA'):
     Returns:
         int: Size of the projection matrix.
     """
-    
-    if fasta_type == 'AA':
+
+    if fasta_type == "AA":
         x = 20
-    elif fasta_type == 'NT':
+    elif fasta_type == "NT":
         x = 4
     else:
         raise ValueError("Invalid fasta_type")
-    
+
     lines = (x ** mask[0]) * (x ** mask[2])
     return lines

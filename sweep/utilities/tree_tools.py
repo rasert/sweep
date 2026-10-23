@@ -6,8 +6,8 @@ from scipy.cluster.hierarchy import to_tree, ClusterNode
 
 from typing import List
 
-def scipy_tree_to_newick(node: ClusterNode, parentdist: float,
-                         leaf_names: List[str]) -> str:
+
+def scipy_tree_to_newick(node: ClusterNode, parentdist: float, leaf_names: List[str]) -> str:
     """
     Constructs a Newick tree from a SciPy hierarchy ClusterNode.
 
@@ -22,17 +22,21 @@ def scipy_tree_to_newick(node: ClusterNode, parentdist: float,
         (string): String in Newick format.
     """
     if node.is_leaf():
-        return f'{leaf_names[node.id]}:{parentdist - node.dist}'
-    
-    left_newick = scipy_tree_to_newick(node.get_left(), node.dist, leaf_names)
-    right_newick = scipy_tree_to_newick(node.get_right(), node.dist,
-                                        leaf_names)
-    
-    return f'({left_newick},{right_newick}):{parentdist - node.dist}'
+        return f"{leaf_names[node.id]}:{parentdist - node.dist}"
 
-def generate_tree(mat: List[List[float]], labels: List[str],
-                  output_file: str = None, metric: str = 'euclidean',
-                  method: str = 'complete') -> str:
+    left_newick = scipy_tree_to_newick(node.get_left(), node.dist, leaf_names)
+    right_newick = scipy_tree_to_newick(node.get_right(), node.dist, leaf_names)
+
+    return f"({left_newick},{right_newick}):{parentdist - node.dist}"
+
+
+def generate_tree(
+    mat: List[List[float]],
+    labels: List[str],
+    output_file: str = None,
+    metric: str = "euclidean",
+    method: str = "complete",
+) -> str:
     """
     Generates a Newick format tree from an input matrix.
 
@@ -58,11 +62,11 @@ def generate_tree(mat: List[List[float]], labels: List[str],
     T = to_tree(Z, rd=False)
 
     # Converts the tree to Newick format
-    newick = scipy_tree_to_newick(T, T.dist, labels) + ';'
+    newick = scipy_tree_to_newick(T, T.dist, labels) + ";"
 
     # If an output file name is provided, write the Newick string to the file
     if output_file:
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             f.write(newick)
 
     return newick

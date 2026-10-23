@@ -1,0 +1,173 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sweep"
+version = "2.2.0.0"
+description = "SWeeP: Spaced Words Projection for compact biological sequences and matrix representations"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "Diogo de J. S. Machado", email = "diogomachado.bioinfo@gmail.com" },
+    { name = "Jackson Diógenes Neves Mourão", email = "rasert@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "numpy>=2.0.0",
+    "scipy>=1.14.0",
+    "polars>=1.0.0",
+    "pydantic>=2.10.0",
+    "orjson>=3.10.0",
+    "biopython>=1.84",
+    "h5py>=3.12.0",
+    "joblib>=1.4.0",
+    "tqdm>=4.66.0",
+    "requests>=2.32.0",
+]
+
+[project.optional-dependencies]
+gpu = [
+    "cupy-cuda13x>=14.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.11.0",
+    "pyrefly>=1.4.0",
+    "mutmut>=3.8.0",
+    "hypothesis>=6.120.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["sweep"]
+
+[tool.hatch.build.targets.wheel.package-data]
+sweep = ["*.mat", "py.typed"]
+
+[tool.pyrefly]
+project-includes = ["sweep", "tests"]
+project-excludes = [
+    "sweep/sweep_support/**",
+    "sweep/utilities/**",
+    "sweep/default_proj_mat_ope.py",
+    "sweep/calc_proj_mat_size.py",
+    "sweep/is_orthonormal.py",
+    "sweep/fas2sweep.py",
+    "sweep/orthbase.py",
+]
+python-version = "3.14"
+preset = "strict"
+check-unannotated-defs = true
+infer-return-types = "never"
+strict-callable-subtyping = true
+strict-partial-subtyping = true
+treat-all-caps-as-final = true
+replace-untyped-imports-with-any = [
+    "Bio.*",
+    "scipy.*",
+    "h5py.*",
+    "joblib.*",
+    "cupy.*",
+    "cupyx.*",
+    "mutmut.*",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+extend-exclude = [
+    "mutants",
+    ".mutmut-cache",
+    "tests/fixtures",
+]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",    # pycodestyle & pyflakes
+    "I",              # isort
+    "UP",             # pyupgrade (Python 3.14 syntax)
+    "ANN",            # flake8-annotations (ultra-strict type hints)
+    "FA",             # flake8-future-annotations
+    "TC",             # flake8-type-checking
+    "PYI",            # flake8-pyi
+    "B",              # flake8-bugbear
+    "SIM",            # flake8-simplify
+    "PT",             # flake8-pytest-style
+    "RUF",            # Ruff-specific rules
+]
+ignore = [
+    "ANN401",         # allow Any only where strictly dynamic dispatch / generic typing requires
+    "TC001", "TC002", "TC003", "TC006", # allow runtime imports for dataclasses and type hints
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "ANN001", "ANN002", "ANN003", "ANN201", "ANN202", # Pytest test functions return None
+]
+"sweep/__init__.py" = [
+    "F401", "F403", "UP009", "I001",
+]
+"sweep/sweep_support/*" = [
+    "ALL",            # legacy internal modules preserved for backwards compatibility
+]
+"sweep/utilities/*" = [
+    "ALL",            # legacy tree/fasta utilities
+]
+"sweep/fas2sweep.py" = [
+    "ALL",            # deprecated legacy entry point
+]
+"sweep/orthbase.py" = [
+    "ALL",            # deprecated legacy SVD entry point
+]
+"sweep/default_proj_mat_ope.py" = [
+    "ALL",            # legacy downloader
+]
+"sweep/calc_proj_mat_size.py" = [
+    "ALL",            # legacy helper
+]
+"sweep/is_orthonormal.py" = [
+    "ALL",            # legacy helper
+]
+
+[tool.mutmut]
+source_paths = ["sweep"]
+also_copy = ["tests"]
+mutate_only_covered_lines = true
+process_isolation = "fork"
+pytest_add_cli_args = ["-x", "-q", "--no-header"]
+timeout_multiplier = 10.0
+timeout_constant = 0.5
+do_not_mutate = [
+    "sweep/__init__.py",
+    "sweep/models.py",
+    "sweep/backend.py",
+    "sweep/fas2sweep.py",
+    "sweep/orthbase.py",
+    "sweep/default_proj_mat_ope.py",
+    "sweep/is_orthonormal.py",
+    "sweep/calc_proj_mat_size.py",
+    "sweep/sweep_support/*",
+    "sweep/utilities/*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning:Bio.*",
+    "ignore::DeprecationWarning:scipy.*",
+]
