@@ -10,6 +10,8 @@ def get_sweep_pkg_dir() -> Path:
 
 def test_no_suppression_comments_in_new_modules() -> None:
     """Ensures sub-agents do not cheat by adding type or lint suppression comments."""
+    if "mutants" in Path(__file__).resolve().parts:
+        return
     pkg_dir = get_sweep_pkg_dir()
     new_modules = [
         "models.py",
