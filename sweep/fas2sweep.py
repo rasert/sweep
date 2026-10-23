@@ -12,6 +12,7 @@ import sys
 from scipy.sparse import lil_matrix, vstack
 from tqdm import tqdm
 from joblib import Parallel, delayed
+import warnings
 
 
 def fas2sweep(
@@ -28,6 +29,11 @@ def fas2sweep(
     dtype=None,
     n_jobs=1,
 ):
+    warnings.warn(
+        "'fas2sweep' is deprecated and will be removed in a future release; use 'sweep' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     """
     Perform the SWeeP algorithm on sequences in FASTA format.
 

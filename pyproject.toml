@@ -149,12 +149,13 @@ also_copy = ["tests"]
 mutate_only_covered_lines = true
 process_isolation = "fork"
 pytest_add_cli_args = ["-x", "-q", "--no-header"]
-timeout_multiplier = 10.0
-timeout_constant = 0.5
+timeout_multiplier = 1.5
+timeout_constant = 0.2
 do_not_mutate = [
     "sweep/__init__.py",
     "sweep/models.py",
     "sweep/backend.py",
+    "sweep/checks.py",
     "sweep/fas2sweep.py",
     "sweep/orthbase.py",
     "sweep/default_proj_mat_ope.py",

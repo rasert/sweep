@@ -2,10 +2,16 @@
 # -*- coding: utf-8 -*-
 
 from .sweep_support.orth import orth
+import warnings
 import numpy as np
 
 
 def orthbase(lin, col, seed=None, dtype=np.float32):
+    warnings.warn(
+        "'orthbase' is deprecated and will be removed in a future release; use 'orth_base' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     """
     Generate an orthogonal basis matrix.
 
