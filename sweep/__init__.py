@@ -7,6 +7,7 @@ from sweep.hdv import extract_hdv, make_log, read_mask, read_mask_vec
 from sweep.models import (
     DEFAULT_SEED,
     DEFAULT_VERSION,
+    DTypeLike,
     HDVInfo,
     HDVResult,
     OrthBaseResult,
@@ -22,6 +23,7 @@ from sweep.projection_core import orth_base
 __all__ = [
     "DEFAULT_SEED",
     "DEFAULT_VERSION",
+    "DTypeLike",
     "HDVInfo",
     "HDVResult",
     "OrthBaseResult",

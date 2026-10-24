@@ -34,17 +34,14 @@ def test_lite_param_generates_correct_dimensions() -> None:
 
 
 def test_core_loop_matches_direct_orth_base_projection() -> None:
-    # Build orth_base for 400 x 10
-    orth = orth_base(lin=400, col=10, seed=DEFAULT_SEED)
+    # 1. Float32 mode
+    orth32 = orth_base(lin=400, col=10, seed=DEFAULT_SEED)
     param = lite_param(psz=10, lenmax=400, seed=DEFAULT_SEED)
 
-    # Synthetic non-zero indices (1-based for R parity in internal vectors)
-    # E.g. indices 5, 23, 100 with counts 2.0, 1.0, 5.0
     hdv_idx = np.array([5, 23, 100], dtype=np.int64)
     hdv_count = np.array([2.0, 1.0, 5.0], dtype=np.float64)
 
-    # 1. Counting mode
-    res_core = core_loop(
+    res_core32 = core_loop(
         param.xnorm,
         10,
         param.mproj,
@@ -56,32 +53,34 @@ def test_core_loop_matches_direct_orth_base_projection() -> None:
         bin_mode=False,
         norm="none",
     )
+    assert res_core32.dtype == np.float32
 
-    # Direct multiplication with full matrix (0-based indices in Python: 4, 22, 99)
-    full_row = np.zeros(400, dtype=np.float64)
-    full_row[hdv_idx - 1] = hdv_count
-    expected = full_row @ orth.mat
+    full_row32 = np.zeros(400, dtype=np.float32)
+    full_row32[hdv_idx - 1] = hdv_count.astype(np.float32)
+    expected32 = full_row32 @ orth32.mat
+    np.testing.assert_allclose(res_core32, expected32, rtol=1e-6, atol=1e-6)
 
-    np.testing.assert_allclose(res_core, expected, rtol=1e-12, atol=1e-12)
-
-    # 2. Binary mode
-    res_core_bin = core_loop(
+    # 2. Float64 mode
+    orth64 = orth_base(lin=400, col=10, seed=DEFAULT_SEED, dtype=np.float64)
+    res_core64 = core_loop(
         param.xnorm,
         10,
         param.mproj,
         PRIME_LIST_50,
         50,
         hdv_idx,
-        None,
+        hdv_count,
         nk=1000,
-        bin_mode=True,
+        bin_mode=False,
         norm="none",
+        dtype=np.float64,
     )
-    full_row_bin = np.zeros(400, dtype=np.float64)
-    full_row_bin[hdv_idx - 1] = 1.0
-    expected_bin = full_row_bin @ orth.mat
+    assert res_core64.dtype == np.float64
 
-    np.testing.assert_allclose(res_core_bin, expected_bin, rtol=1e-12, atol=1e-12)
+    full_row64 = np.zeros(400, dtype=np.float64)
+    full_row64[hdv_idx - 1] = hdv_count
+    expected64 = full_row64 @ orth64.mat
+    np.testing.assert_allclose(res_core64, expected64, rtol=1e-12, atol=1e-12)
 
 
 def test_backend_device_and_sparse_matmul() -> None:

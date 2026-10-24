@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
@@ -12,6 +12,7 @@ from sweep.indexing import def_mask
 from sweep.models import (
     DEFAULT_SEED,
     DEFAULT_VERSION,
+    DTypeLike,
     NormMode,
     OrthBaseResult,
     SeqType,
@@ -110,10 +111,13 @@ def orth_base(
     seqtype: SeqType = "AA",
     mask: Sequence[int] | NDArray[np.int32] | None = None,
     seed: int = DEFAULT_SEED,
+    dtype: DTypeLike = np.float32,
+    chunk_size: int = 8192,
 ) -> OrthBaseResult:
     """Generates an orthonormal basis matrix for SWeeP projection.
 
-    Matches R's orthBase function with full mathematical and numerical parity.
+    Uses cache-friendly chunked float64 internal arithmetic to guarantee exact
+    numerical phase stability, writing into the requested target dtype (default float32).
     """
     if col is None:
         msg = "'col' (projection size) must be specified."
@@ -127,19 +131,45 @@ def orth_base(
         kk = 20 if seqtype == "AA" else 4
         lin = int(kk ** np.sum(bmask))
 
-    idx = np.arange(1, lin + 1, dtype=np.int64)[:, None]
-    primes = np.array(PRIME_LIST_50, dtype=np.int64)[None, :]
-    mret = idx % primes
+    target_dtype = np.dtype(dtype)
+    if target_dtype not in (np.dtype(np.float32), np.dtype(np.float64)):
+        msg = f"'dtype' must be float32 or float64, got {target_dtype}."
+        raise ValueError(msg)
 
     rng = R_MT19937(seed)
     raw = rng.runif(len(PRIME_LIST_50) * col)
     mproj = raw.reshape((len(PRIME_LIST_50), col), order="F")
 
-    dt = (1.0 + mret) @ mproj
-    bs = 2.0 * (dt - np.floor(dt)) - 1.0
-
     xnorm = float(np.sqrt(lin / 3.0))
-    mat = bs / xnorm
+    scale = 2.0 / xnorm
+    offset = -1.0 / xnorm
+
+    primes = np.array(PRIME_LIST_50, dtype=np.int64)[None, :]
+    mat = np.empty((lin, col), dtype=target_dtype)
+
+    step = max(1, min(chunk_size, lin))
+    buf_dt = np.empty((step, col), dtype=np.float64)
+    buf_floor = np.empty((step, col), dtype=np.float64)
+    buf_mret = np.empty((step, len(PRIME_LIST_50)), dtype=np.float64)
+
+    for start in range(0, lin, step):
+        end = min(start + step, lin)
+        n_rows = end - start
+        sub_idx = np.arange(start + 1, end + 1, dtype=np.int64)[:, None]
+        mret_view = buf_mret[:n_rows]
+        np.mod(sub_idx, primes, out=mret_view, casting="unsafe")
+        mret_view += 1.0
+
+        dt_view = buf_dt[:n_rows]
+        floor_view = buf_floor[:n_rows]
+
+        np.matmul(mret_view, mproj, out=dt_view)
+        np.floor(dt_view, out=floor_view)
+        dt_view -= floor_view
+        dt_view *= scale
+        dt_view += offset
+
+        mat[start:end] = dt_view
 
     return OrthBaseResult(mat=mat, seed=seed, version=DEFAULT_VERSION)
 
@@ -155,10 +185,12 @@ def core_loop(
     nk: int = 1000,
     bin_mode: bool = False,
     norm: NormMode = "none",
-) -> NDArray[np.float64]:
+    dtype: DTypeLike = np.float32,
+) -> NDArray[np.floating[Any]]:
     """Projects sparse HDV sequence directly without materializing full basis matrix."""
+    target_dtype = np.dtype(dtype)
     if len(hdv_idx) == 0:
-        return np.zeros(psz, dtype=np.float64)
+        return np.zeros(psz, dtype=target_dtype)
 
     tot = len(hdv_idx)
     primes = np.array(pslist, dtype=np.int64)[None, :]
@@ -177,4 +209,4 @@ def core_loop(
 
         out += np.sum(bs, axis=0) / xnorm
 
-    return out
+    return out.astype(target_dtype)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Final
+from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
@@ -55,51 +55,59 @@ def get_available_device(requested: DeviceType = "auto") -> DeviceType:
 
 def sparse_dense_matmul(
     sp_mat: csr_array,
-    dense_mat: NDArray[np.float64],
+    dense_mat: NDArray[np.floating[Any]],
     device: DeviceType = "auto",
-) -> NDArray[np.float64]:
-    """Multiplies a CSR sparse matrix by a dense matrix in float64 precision."""
+) -> NDArray[np.floating[Any]]:
+    """Multiplies a CSR sparse matrix by a dense matrix, preserving precision (float32/float64)."""
     target_device = get_available_device(device)
+    target_dtype = dense_mat.dtype
 
     if target_device == "cuda" and _CUPY_AVAILABLE:
         try:
             import cupy as cp
             import cupyx.scipy.sparse as cp_sparse
 
+            cp_dtype = cp.float32 if target_dtype == np.float32 else cp.float64
             sp_gpu = cp_sparse.csr_matrix(
                 (
-                    cp.asarray(sp_mat.data, dtype=cp.float64),
+                    cp.asarray(sp_mat.data, dtype=cp_dtype),
                     cp.asarray(sp_mat.indices, dtype=cp.int32),
                     cp.asarray(sp_mat.indptr, dtype=cp.int32),
                 ),
                 shape=sp_mat.shape,
             )
-            dense_gpu = cp.asarray(dense_mat, dtype=cp.float64)
+            dense_gpu = cp.asarray(dense_mat, dtype=cp_dtype)
             res_gpu = sp_gpu.dot(dense_gpu)
             return cp.asnumpy(res_gpu)
         except Exception as exc:
             logger.warning("GPU execution failed, falling back to CPU: %s", exc)
 
+    if sp_mat.dtype != target_dtype:
+        sp_mat = sp_mat.astype(target_dtype)
     return sp_mat.dot(dense_mat)
 
 
 def dense_dense_matmul(
-    a: NDArray[np.float64],
-    b: NDArray[np.float64],
+    a: NDArray[np.floating[Any]],
+    b: NDArray[np.floating[Any]],
     device: DeviceType = "auto",
-) -> NDArray[np.float64]:
-    """Multiplies two dense matrices in float64 precision."""
+) -> NDArray[np.floating[Any]]:
+    """Multiplies two dense matrices, preserving precision (float32/float64)."""
     target_device = get_available_device(device)
+    target_dtype = b.dtype
 
     if target_device == "cuda" and _CUPY_AVAILABLE:
         try:
             import cupy as cp
 
-            a_gpu = cp.asarray(a, dtype=cp.float64)
-            b_gpu = cp.asarray(b, dtype=cp.float64)
+            cp_dtype = cp.float32 if target_dtype == np.float32 else cp.float64
+            a_gpu = cp.asarray(a, dtype=cp_dtype)
+            b_gpu = cp.asarray(b, dtype=cp_dtype)
             res_gpu = cp.matmul(a_gpu, b_gpu)
             return cp.asnumpy(res_gpu)
         except Exception as exc:
             logger.warning("GPU execution failed, falling back to CPU: %s", exc)
 
+    if a.dtype != target_dtype:
+        a = a.astype(target_dtype)
     return a @ b

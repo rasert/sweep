@@ -10,23 +10,31 @@ from tests.helpers.golden import load_golden_csv, load_golden_mtx
 
 def test_sweep_matrix_all_modes_parity() -> None:
     sp_mat = load_golden_mtx("sweep_matrix_sparse_10x25.mtx")
-    orth = orth_base(lin=25, col=5, seed=DEFAULT_SEED)
+    orth = orth_base(lin=25, col=5, seed=DEFAULT_SEED, dtype=np.float64)
     golden_all = load_golden_csv("sweep_matrix_dense_10x25_all_modes.csv")
 
     # 1. count_none
-    res_none = sweep(sp_mat, orthbase=orth, bin_mode=False, norm="none", verbose=False)
+    res_none = sweep(
+        sp_mat, orthbase=orth, bin_mode=False, norm="none", verbose=False, dtype=np.float64
+    )
     np.testing.assert_allclose(res_none.proj, golden_all[:, 0:5], rtol=1e-12, atol=1e-12)
 
     # 2. bin_none
-    res_bin = sweep(sp_mat, orthbase=orth, bin_mode=True, norm="none", verbose=False)
+    res_bin = sweep(
+        sp_mat, orthbase=orth, bin_mode=True, norm="none", verbose=False, dtype=np.float64
+    )
     np.testing.assert_allclose(res_bin.proj, golden_all[:, 5:10], rtol=1e-12, atol=1e-12)
 
     # 3. count_log
-    res_log = sweep(sp_mat, orthbase=orth, bin_mode=False, norm="log", verbose=False)
+    res_log = sweep(
+        sp_mat, orthbase=orth, bin_mode=False, norm="log", verbose=False, dtype=np.float64
+    )
     np.testing.assert_allclose(res_log.proj, golden_all[:, 10:15], rtol=1e-12, atol=1e-12)
 
     # 4. bin_logneg
-    res_logneg = sweep(sp_mat, orthbase=orth, bin_mode=True, norm="logNeg", verbose=False)
+    res_logneg = sweep(
+        sp_mat, orthbase=orth, bin_mode=True, norm="logNeg", verbose=False, dtype=np.float64
+    )
     np.testing.assert_allclose(res_logneg.proj, golden_all[:, 15:20], rtol=1e-12, atol=1e-12)
 
 
@@ -38,12 +46,12 @@ def test_sweep_sparse_identity_matches_dense_for_neg_norms() -> None:
     # Neg counting
     p_sp_neg = sweep(sp_mat, orthbase=orth, bin_mode=False, norm="Neg", verbose=False).proj
     p_de_neg = sweep(dense_mat, orthbase=orth, bin_mode=False, norm="Neg", verbose=False).proj
-    np.testing.assert_allclose(p_sp_neg, p_de_neg, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(p_sp_neg, p_de_neg, rtol=1e-5, atol=1e-5)
 
     # logNeg counting
     p_sp_logneg = sweep(sp_mat, orthbase=orth, bin_mode=False, norm="logNeg", verbose=False).proj
     p_de_logneg = sweep(dense_mat, orthbase=orth, bin_mode=False, norm="logNeg", verbose=False).proj
-    np.testing.assert_allclose(p_sp_logneg, p_de_logneg, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(p_sp_logneg, p_de_logneg, rtol=1e-5, atol=1e-5)
 
 
 def test_sweep_matrix_transpose_and_rna_seq_equivalence() -> None:
@@ -64,4 +72,4 @@ def test_sweep_lite_generic_matrix_matches_sweep() -> None:
     res_sweep = sweep(sp_mat, orthbase=orth, bin_mode=False, norm="none", verbose=False)
     res_lite = sweep_lite(sp_mat, psz=5, bin_mode=False, norm="none", verbose=False)
 
-    np.testing.assert_allclose(res_sweep.proj, res_lite.proj, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(res_sweep.proj, res_lite.proj, rtol=1e-6, atol=1e-6)
